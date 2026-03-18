@@ -5,10 +5,17 @@ This is a project developed by Dr. Menik to give the students an opportunity to 
 */
 package uga.menik.csx370.services;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
+import javax.sql.DataSource;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
-
+import org.springframework.beans.factory.annotation.Autowired; // Needed for
 import uga.menik.csx370.models.FollowableUser;
 import uga.menik.csx370.utility.Utility;
 
@@ -23,6 +30,13 @@ public class PeopleService {
      * are followable. The list should not contain the user 
      * with id userIdToExclude.
      */
+    private final DataSource dataSource;
+
+    @Autowired
+    public PeopleService(DataSource dataSource) {
+        this.dataSource = dataSource;
+    }
+
     public List<FollowableUser> getFollowableUsers(String userIdToExclude) {
         // Write an SQL query to find the users that are not the current user.
 
@@ -36,8 +50,32 @@ public class PeopleService {
         // Check the following createSampleFollowableUserList function to see 
         // how to create a list of FollowableUsers.
 
+
+        final String sql = "SELECT userId, firstName, lastName FROM user WHERE userId != ?";
+
+        List<FollowableUser> followableUsers = new ArrayList<>();
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, userIdToExclude);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    String userId = rs.getString("userId");
+                    String firstName = rs.getString("firstName");
+                    String lastName = rs.getString("lastName");
+
+                    followableUsers.add(new FollowableUser(userId, firstName, lastName, false, ""));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return followableUsers;
         // Replace the following line and return the list you created.
-        return Utility.createSampleFollowableUserList();
+        // return Utility.createSampleFollowableUserList();
     }
 
 }

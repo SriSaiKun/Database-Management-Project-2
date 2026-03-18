@@ -32,6 +32,14 @@ public class PeopleController {
     // Inject UserService and PeopleService instances.
     // See LoginController.java to see how to do this.
     // Hint: Add a constructor with @Autowired annotation.
+    private final PeopleService peopleService;
+    private final UserService userService;
+
+    @Autowired
+    public PeopleController(PeopleService peopleService, UserService userService) {
+        this.peopleService = peopleService;
+        this.userService = userService;
+    }
 
     /**
      * Serves the /people web page.
@@ -49,7 +57,10 @@ public class PeopleController {
         // You should replace it with actual data from the database.
         // Use the PeopleService instance to find followable users.
         // Use UserService to access logged in userId to exclude.
-        List<FollowableUser> followableUsers = Utility.createSampleFollowableUserList();
+        // Replaced "List<FollowableUser> followableUsers = Utility.createSampleFollowableUserList();" With the following 2 lines:
+        String currentUserId = userService.getLoggedInUser().getUserId();
+        List<FollowableUser> followableUsers = peopleService.getFollowableUsers(currentUserId);
+
         mv.addObject("users", followableUsers);
 
         // If an error occured, you can set the following property with the
@@ -71,7 +82,7 @@ public class PeopleController {
      * Follow and unfollow is handled by submitting a get type form to this URL 
      * by specifing the userId and the isFollow variables.
      * Learn more here: https://www.w3schools.com/tags/att_form_method.asp
-     * An example URL that is handled by this function looks like below:
+     * An example URL that is handled by this unction looks like below:
      * http://localhost:8081/people/1/follow/false
      * The above URL assigns 1 to userId and false to isFollow.
      */
