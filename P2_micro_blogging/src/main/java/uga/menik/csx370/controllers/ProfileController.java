@@ -12,11 +12,12 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 
 import uga.menik.csx370.models.Post;
+import uga.menik.csx370.services.ProfileService;
 import uga.menik.csx370.services.UserService;
-import uga.menik.csx370.utility.Utility;
 
 /**
  * Handles /profile URL and its sub URLs.
@@ -25,16 +26,17 @@ import uga.menik.csx370.utility.Utility;
 @RequestMapping("/profile")
 public class ProfileController {
 
-    // UserService has user login and registration related functions.
+    // UserService is used to get the logged in user's ID.
     private final UserService userService;
 
-    /**
-     * See notes in AuthInterceptor.java regarding how this works 
-     * through dependency injection and inversion of control.
-     */
+    // ProfileService is used to get posts for a specific user from the database.
+    private final ProfileService profileService;
+
+    // Spring automatically injects UserService and ProfileService instances via @Autowired.
     @Autowired
-    public ProfileController(UserService userService) {
+    public ProfileController(UserService userService, ProfileService profileService) {
         this.userService = userService;
+        this.profileService = profileService;
     }
 
     /**
@@ -44,7 +46,7 @@ public class ProfileController {
     @GetMapping
     public ModelAndView profileOfLoggedInUser() {
         System.out.println("User is attempting to view profile of the logged in user.");
-        return profileOfSpecificUser(userService.getLoggedInUser().getUserId());
+        return profileOfSpecificUser(userService.getLoggedInUser().getUserId(), null);
     }
 
     /**
@@ -52,28 +54,28 @@ public class ProfileController {
      * This serves the webpage that shows posts of a speific user given by userId.
      * See comments in PeopleController.java in followUnfollowUser function regarding 
      * how path variables work.
+     * I tried matching the format in PeopleController.java as that was provided already
      */
     @GetMapping("/{userId}")
-    public ModelAndView profileOfSpecificUser(@PathVariable("userId") String userId) {
+    public ModelAndView profileOfSpecificUser(@PathVariable("userId") String userId, @RequestParam(name = "error", required = false) String error) {
         System.out.println("User is attempting to view profile: " + userId);
-        
-        // See notes on ModelAndView in BookmarksController.java.
+
+        // posts_page is the HTML template that will display the posts.
         ModelAndView mv = new ModelAndView("posts_page");
 
-        // Following line populates sample data.
-        // You should replace it with actual data from the database.
-        List<Post> posts = Utility.createSamplePostsListWithoutComments();
+        // Use ProfileService to get real posts for this user from the database.
+        // Replaces the hardcoded Utility.createSamplePostsListWithoutComments() call.
+        List<Post> posts = profileService.getPostsForUser(userId);
         mv.addObject("posts", posts);
 
-        // If an error occured, you can set the following property with the
-        // error message to show the error message to the user.
-        // String errorMessage = "Some error occured!";
-        // mv.addObject("errorMessage", errorMessage);
+        // Pass error message to template if one was provided in the URL.
+        mv.addObject("errorMessage", error);
 
-        // Enable the following line if you want to show no content message.
-        // Do that if your content list is empty.
-        // mv.addObject("isNoContent", true);
-        
+        // If the post list is empty, show a no content message.
+        if (posts.isEmpty()) {
+            mv.addObject("isNoContent", true);
+        }
+
         return mv;
     }
     
