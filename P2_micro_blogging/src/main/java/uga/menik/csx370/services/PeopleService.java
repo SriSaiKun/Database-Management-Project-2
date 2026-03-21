@@ -71,12 +71,11 @@ public class PeopleService {
                     pstmtDate.setString(1, userId);
 
                     ResultSet postSet = pstmtDate.executeQuery();
-                    String date = "";
+                    String date = "Unknown";
                     if (postSet.next()) {
                         date = postSet.getString("postDate");
                     }
                     followableUsers.add(new FollowableUser(userId, firstName, lastName, false, date));
-                    postSet.next();
                 }
             }
         } catch (SQLException e) {
