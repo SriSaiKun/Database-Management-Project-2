@@ -53,6 +53,9 @@ public class PeopleService {
 
         final String sql = 
         "SELECT userId, firstName, lastName FROM user WHERE userId != ?";
+        final String sqlIsFollowed = "SELECT True as followed " +
+        "FROM follow " +
+        "WHERE followerId = ? AND followeeId = ?";
         final String sqlDate = "SELECT DATE_FORMAT(postDate, '%M %d %Y %H:%i %p') as postDate from post WHERE userId = ? ORDER BY postDate DESC LIMIT 1;";
 
         List<FollowableUser> followableUsers = new ArrayList<>();
@@ -75,7 +78,20 @@ public class PeopleService {
                     if (postSet.next()) {
                         date = postSet.getString("postDate");
                     }
-                    followableUsers.add(new FollowableUser(userId, firstName, lastName, false, date));
+
+                    PreparedStatement pstmtFollow = conn.prepareStatement(sqlIsFollowed);
+                    pstmtFollow.setString(1, userIdToExclude);
+                    pstmtFollow.setString(2, userId);
+                    
+                    ResultSet followSet = pstmtFollow.executeQuery();
+                    Boolean isFollowed = false;
+                    if (followSet.next()) {
+                        // Because a row will only be returned when the Poster's userId
+                        // == followerId AND the commenter's user id == followeeId,
+                        // if this condition returns true, we can assume isFollow is true
+                        isFollowed = true; 
+                    }
+                    followableUsers.add(new FollowableUser(userId, firstName, lastName, isFollowed, date));
                 }
             }
         } catch (SQLException e) {
