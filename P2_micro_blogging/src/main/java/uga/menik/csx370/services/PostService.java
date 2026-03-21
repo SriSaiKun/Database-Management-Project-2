@@ -35,7 +35,7 @@ public class PostService {
         this.dataSource = dataSource;
     }
 
-    public User getPoster(String posterId) {
+    public static User getPoster(String posterId, DataSource dataSource) {
         final String sql = "SELECT firstName, lastName " +
         "FROM user " +
         "WHERE userId = ?";
@@ -63,7 +63,7 @@ public class PostService {
         return null;
     }
 
-    public int getHeartsCount(String postId) {
+    public static int getHeartsCount(String postId, DataSource dataSource) {
         final String sql = "SELECT * " +
         "FROM heart " +
         "WHERE postId = ?";
@@ -91,7 +91,7 @@ public class PostService {
         return 0;
     }
 
-    public int getCommentsCount(String postId) {
+    public static int getCommentsCount(String postId, DataSource dataSource) {
         final String sql = "SELECT * " +
         "FROM comment " +
         "WHERE postId = ?";
@@ -119,7 +119,7 @@ public class PostService {
         return 0;
     }
 
-    public Boolean isHearted(String postId, String userId) {
+    public static Boolean isHearted(String postId, String userId, DataSource dataSource) {
         final String sql = "SELECT * " +
         "FROM heart " +
         "WHERE postId = ? AND userId = ?";
@@ -145,7 +145,7 @@ public class PostService {
         return false;
     }
 
-    public Boolean isBookmarked(String postId, String userId) {
+    public static Boolean isBookmarked(String postId, String userId, DataSource dataSource) {
         final String sql = "SELECT * " +
         "FROM heart " +
         "WHERE postId = ? AND userId = ?";
@@ -191,11 +191,11 @@ public class PostService {
                     String posterId = rs.getString("userId");
                     String content = rs.getString("content");
                     String postDate = rs.getString("postDate");
-                    User poster = getPoster(posterId);
-                    int heartCount = getHeartsCount(postId);
-                    int commentCount = getCommentsCount(postId);
-                    Boolean isHearted = isHearted(postId, userId);
-                    Boolean isBookmarked = isBookmarked(postId, userId);
+                    User poster = getPoster(posterId, dataSource);
+                    int heartCount = getHeartsCount(postId, dataSource);
+                    int commentCount = getCommentsCount(postId, dataSource);
+                    Boolean isHearted = isHearted(postId, userId, dataSource);
+                    Boolean isBookmarked = isBookmarked(postId, userId, dataSource);
                     Post post = new Post(postId, content, postDate, poster, heartCount, commentCount, isHearted, isBookmarked);
                     return post;
                 }
