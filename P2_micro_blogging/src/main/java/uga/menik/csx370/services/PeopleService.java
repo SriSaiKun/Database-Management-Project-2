@@ -9,15 +9,15 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-
-import javax.sql.DataSource;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired; // Needed for
+import javax.sql.DataSource;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service; // Needed for
+
 import uga.menik.csx370.models.FollowableUser;
-import uga.menik.csx370.utility.Utility;
 
 /**
  * This service contains people related functions.
@@ -51,13 +51,17 @@ public class PeopleService {
         // how to create a list of FollowableUsers.
 
 
-        final String sql = "SELECT userId, firstName, lastName FROM user WHERE userId != ?";
+        final String sql = 
+        "SELECT userId, firstName, lastName FROM user WHERE userId != ?";
+        final String sqlIsFollowed = "SELECT True as followed " +
+        "FROM follow " +
+        "WHERE followerId = ? AND followeeId = ?";
+        final String sqlDate = "SELECT DATE_FORMAT(postDate, '%M %d %Y %H:%i %p') as postDate from post WHERE userId = ? ORDER BY postDate DESC LIMIT 1;";
 
         List<FollowableUser> followableUsers = new ArrayList<>();
 
         try (Connection conn = dataSource.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
+            PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, userIdToExclude);
 
             try (ResultSet rs = pstmt.executeQuery()) {
@@ -66,7 +70,28 @@ public class PeopleService {
                     String firstName = rs.getString("firstName");
                     String lastName = rs.getString("lastName");
 
-                    followableUsers.add(new FollowableUser(userId, firstName, lastName, false, ""));
+                    PreparedStatement pstmtDate = conn.prepareStatement(sqlDate);
+                    pstmtDate.setString(1, userId);
+
+                    ResultSet postSet = pstmtDate.executeQuery();
+                    String date = "Unknown";
+                    if (postSet.next()) {
+                        date = postSet.getString("postDate");
+                    }
+
+                    PreparedStatement pstmtFollow = conn.prepareStatement(sqlIsFollowed);
+                    pstmtFollow.setString(1, userIdToExclude);
+                    pstmtFollow.setString(2, userId);
+                    
+                    ResultSet followSet = pstmtFollow.executeQuery();
+                    Boolean isFollowed = false;
+                    if (followSet.next()) {
+                        // Because a row will only be returned when the Poster's userId
+                        // == followerId AND the commenter's user id == followeeId,
+                        // if this condition returns true, we can assume isFollow is true
+                        isFollowed = true; 
+                    }
+                    followableUsers.add(new FollowableUser(userId, firstName, lastName, isFollowed, date));
                 }
             }
         } catch (SQLException e) {

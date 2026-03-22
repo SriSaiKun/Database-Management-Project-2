@@ -9,6 +9,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -18,8 +19,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import uga.menik.csx370.models.Comment;
 import uga.menik.csx370.models.ExpandedPost;
 import uga.menik.csx370.utility.Utility;
+import uga.menik.csx370.models.Post;
+import uga.menik.csx370.models.User;
 import uga.menik.csx370.services.PostService;
 import uga.menik.csx370.services.UserService;
 
@@ -37,6 +41,15 @@ public PostController(PostService postService, UserService userService) {
 	this.postService = postService;
 	this.userService = userService;
 }
+    private final PostService postService;
+    private final UserService userService;
+
+    @Autowired
+    public PostController(PostService postService, UserService userService) {
+        this.postService = postService;
+        this.userService = userService;
+    }
+
     /**
      * This function handles the /post/{postId} URL.
      * This handlers serves the web page for a specific post.
@@ -51,13 +64,28 @@ public PostController(PostService postService, UserService userService) {
     public ModelAndView webpage(@PathVariable("postId") String postId,
             @RequestParam(name = "error", required = false) String error) {
         System.out.println("The user is attempting to view post with id: " + postId);
+
         // See notes on ModelAndView in BookmarksController.java.
         ModelAndView mv = new ModelAndView("posts_page");
+        User user = userService.getLoggedInUser();
 
-        // Following line populates sample data.
-        // You should replace it with actual data from the database.
-        List<ExpandedPost> posts = Utility.createSampleExpandedPostWithComments();
-        mv.addObject("posts", posts);
+        String currentUserId = user.getUserId();
+        List<Comment> comments = postService.getComments(postId, currentUserId);
+        
+        Post post = postService.getPost(postId, user.getUserId());
+        if (post != null) {
+            String postContent = post.getContent();
+            String postDate = post.getPostDate();
+            User poster = post.getUser();
+            int heartsCount = post.getHeartsCount();
+            Boolean isHearted = post.getHearted();
+            boolean isBookmarked = post.isBookmarked(); 
+
+            ExpandedPost postWithComments = new ExpandedPost(postId, postContent, 
+            postDate, poster, heartsCount, 
+            comments.size(), isHearted, isBookmarked, comments);
+            mv.addObject("posts", postWithComments);
+        }
 
         // If an error occured, you can set the following property with the
         // error message to show the error message to the user.
@@ -84,6 +112,8 @@ public PostController(PostService postService, UserService userService) {
         System.out.println("The user is attempting add a comment:");
         System.out.println("\tpostId: " + postId);
         System.out.println("\tcomment: " + comment);
+        String currentUserId = userService.getLoggedInUser().getUserId();
+
 
         // Redirect the user if the comment adding is a success.
         // return "redirect:/post/" + postId;

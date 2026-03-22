@@ -4,10 +4,10 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-
-import javax.sql.DataSource;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.sql.DataSource;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -60,7 +60,11 @@ public class ProfileService {
                     String lastName = rs.getString("lastName");
 
                     User user = new User(userId, firstName, lastName);
-                    posts.add(new Post(postId, content, postDate, user, 0, 0, false, false));
+                    int heartsCount = PostService.getHeartsCount(postId, dataSource);
+                    int commentCount = PostService.getCommentsCount(postId, dataSource);
+                    Boolean isHearted = PostService.isHearted(postId, userId, dataSource);
+                    Boolean isBookmarked = PostService.isBookmarked(postId, userId, dataSource);
+                    posts.add(new Post(postId, content, postDate, user, heartsCount, commentCount, isHearted, isBookmarked));
                 }
             }
         } catch (SQLException e) {
