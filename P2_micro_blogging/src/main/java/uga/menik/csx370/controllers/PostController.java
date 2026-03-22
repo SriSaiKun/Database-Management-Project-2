@@ -16,9 +16,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import uga.menik.csx370.models.ExpandedPost;
 import uga.menik.csx370.utility.Utility;
+import uga.menik.csx370.services.PostService;
+import uga.menik.csx370.services.UserService;
 
 /**
  * Handles /post URL and its sub urls.
@@ -26,7 +29,14 @@ import uga.menik.csx370.utility.Utility;
 @Controller
 @RequestMapping("/post")
 public class PostController {
+	private final PostService postService;
+	private final UserService userService;
 
+@Autowired
+public PostController(PostService postService, UserService userService) {
+	this.postService = postService;
+	this.userService = userService;
+}
     /**
      * This function handles the /post/{postId} URL.
      * This handlers serves the web page for a specific post.
@@ -116,16 +126,21 @@ public class PostController {
     public String addOrRemoveBookmark(@PathVariable("postId") String postId,
             @PathVariable("isAdd") Boolean isAdd) {
         System.out.println("The user is attempting add or remove a bookmark:");
-        System.out.println("\tpostId: " + postId);
-        System.out.println("\tisAdd: " + isAdd);
+    	System.out.println("\tpostId: " + postId);
+    	System.out.println("\tisAdd: " + isAdd);
 
-        // Redirect the user if the comment adding is a success.
-        // return "redirect:/post/" + postId;
+    String currentUserId = userService.getLoggedInUser().getUserId();
 
-        // Redirect the user with an error message if there was an error.
-        String message = URLEncoder.encode("Failed to (un)bookmark the post. Please try again.",
-                StandardCharsets.UTF_8);
-        return "redirect:/post/" + postId + "?error=" + message;
+    boolean isSuccess = isAdd
+            ? postService.addBookmark(currentUserId, postId)
+            : postService.removeBookmark(currentUserId, postId);
+
+    if (isSuccess) {
+        return "redirect:/post/" + postId;
     }
 
+    String message = URLEncoder.encode("Failed to (un)bookmark the post. Please try again.",
+            StandardCharsets.UTF_8);
+    return "redirect:/post/" + postId + "?error=" + message;
+	}
 }
