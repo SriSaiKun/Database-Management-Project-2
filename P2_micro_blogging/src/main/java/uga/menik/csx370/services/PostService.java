@@ -64,7 +64,7 @@ public class PostService {
     }
 
     public static int getHeartsCount(String postId, DataSource dataSource) {
-        final String sql = "SELECT * " +
+        final String sql = "SELECT COUNT(*) as NumComments " +
         "FROM heart " +
         "WHERE postId = ?";
         
@@ -75,14 +75,13 @@ public class PostService {
             pstmt.setString(1, postId);
 
             try (ResultSet rs = pstmt.executeQuery()) {
-                // Traverse the result rows one at a time.
-                // Note: This specific while loop will only run at most once 
-                // since postId is unique
-                int numRows = -1;
-                do {
-                    numRows += 1;
-                } while (rs.next());
-                
+                int numRows = 0;
+                // the if statement should run every time, but if for some reason it doesn't
+                // then skip
+                if (rs.next()) {
+                    numRows = rs.getInt("NumComments");
+                }
+
                 return numRows;
             }
         } catch (SQLException e) {
@@ -92,7 +91,7 @@ public class PostService {
     }
 
     public static int getCommentsCount(String postId, DataSource dataSource) {
-        final String sql = "SELECT * " +
+        final String sql = "SELECT COUNT(*) as NumComments " +
         "FROM comment " +
         "WHERE postId = ?";
         
@@ -103,13 +102,12 @@ public class PostService {
             pstmt.setString(1, postId);
 
             try (ResultSet rs = pstmt.executeQuery()) {
-                // Traverse the result rows one at a time.
-                // Note: This specific while loop will only run at most once 
-                // since postId is unique
-                int numRows = -1;
-                do {
-                    numRows += 1;
-                } while (rs.next());
+                int numRows = 0;
+                // the if statement should run every time, but if for some reason it doesn't
+                // then skip
+                if (rs.next()) {
+                    numRows = rs.getInt("NumComments");
+                }
                 
                 return numRows;
             }
@@ -147,7 +145,7 @@ public class PostService {
 
     public static Boolean isBookmarked(String postId, String userId, DataSource dataSource) {
         final String sql = "SELECT * " +
-        "FROM heart " +
+        "FROM bookmark " +
         "WHERE postId = ? AND userId = ?";
         
         try (Connection conn = dataSource.getConnection();
