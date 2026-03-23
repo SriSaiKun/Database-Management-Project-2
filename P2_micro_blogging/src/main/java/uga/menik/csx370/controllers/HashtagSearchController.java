@@ -44,6 +44,7 @@ public class HashtagSearchController {
         List<String> hashtagList = Arrays.stream(hashtags.trim().split("\\s+"))
                 .map(String::trim)
                 .filter(s -> !s.isEmpty())
+		.distinct()
                 .toList();
 
         List<Post> posts = postService.searchPostsByHashtags(hashtagList);

@@ -11,7 +11,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.ArrayList;
 
@@ -22,11 +21,6 @@ import javax.sql.DataSource;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.stereotype.Service;
-
-import uga.menik.csx370.models.Post;
-import uga.menik.csx370.models.User;
-
-import org.springframework.stereotype.Service; // Needed for
 
 import uga.menik.csx370.models.Comment;
 import uga.menik.csx370.models.FollowableUser;
@@ -69,7 +63,19 @@ public class PostService {
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    posts.add(buildPost(rs, false, true));
+			posts.add(buildPost(
+                            rs,
+                            isHearted(rs.getString("postId"), currentUserId, dataSource),
+                            true
+                    ));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return posts;
+    }
 
     public static User getPoster(String posterId, DataSource dataSource) {
         final String sql = "SELECT firstName, lastName " +
@@ -309,7 +315,7 @@ public class PostService {
             e.printStackTrace();
         }
 
-        return posts;
+        return comments;
     }
 
     public List<Post> searchPostsByHashtags(List<String> hashtags) {
@@ -355,33 +361,43 @@ public class PostService {
     }
 
     public boolean addBookmark(String userId, String postId) {
-        final String sql = "INSERT INTO bookmark (userId, postId) VALUES (?, ?)";
+	if (isBookmarked(postId, userId, dataSource)) {
+        	return true;
+    	}
 
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+    final String sql = "INSERT INTO bookmark (userId, postId) VALUES (?, ?)";
 
-            pstmt.setInt(1, Integer.parseInt(userId));
-            pstmt.setInt(2, Integer.parseInt(postId));
-            return pstmt.executeUpdate() > 0;
+    try (Connection conn = dataSource.getConnection();
+         PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-        } catch (SQLException e) {
-            return false;
-        }
+        	pstmt.setInt(1, Integer.parseInt(userId));
+        	pstmt.setInt(2, Integer.parseInt(postId));
+        	return pstmt.executeUpdate() == 1;
+
+    	} catch (SQLException e) {
+        	e.printStackTrace();
+        	return false;
+    	}
     }
 
     public boolean removeBookmark(String userId, String postId) {
-        final String sql = "DELETE FROM bookmark WHERE userId = ? AND postId = ?";
+        if (!isBookmarked(postId, userId, dataSource)) {
+        	return true;
+    	}
 
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+    final String sql = "DELETE FROM bookmark WHERE userId = ? AND postId = ?";
 
-            pstmt.setInt(1, Integer.parseInt(userId));
-            pstmt.setInt(2, Integer.parseInt(postId));
-            return pstmt.executeUpdate() > 0;
+    try (Connection conn = dataSource.getConnection();
+         PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-        } catch (SQLException e) {
-            return false;
-        }
+		pstmt.setInt(1, Integer.parseInt(userId));
+        	pstmt.setInt(2, Integer.parseInt(postId));
+        	return pstmt.executeUpdate() == 1;
+
+    	} catch (SQLException e) {
+        	e.printStackTrace();
+        	return false;
+    	}
     }
 
     private Post buildPost(ResultSet rs, boolean isHearted, boolean isBookmarked) throws SQLException {
@@ -405,10 +421,6 @@ public class PostService {
 
     private String formatTimestamp(Timestamp timestamp) {
         return timestamp.toLocalDateTime().format(DISPLAY_DATE_FORMAT);
-    }
-        return comments;
-        // Replace the following line and return the list you created.
-        // return Utility.createSampleFollowableUserList();
     }
 
 }
