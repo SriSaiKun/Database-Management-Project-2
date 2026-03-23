@@ -11,15 +11,13 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.format.DateTimeFormatter;
-import java.util.Collections;
 import java.util.ArrayList;
-
+import java.util.Collections;
 import java.util.List;
 
 import javax.sql.DataSource;
 
 import org.springframework.beans.factory.annotation.Autowired;
-
 import org.springframework.stereotype.Service;
 
 import uga.menik.csx370.models.Comment;
@@ -263,10 +261,11 @@ public class PostService {
         "FROM follow " +
         "WHERE followerId = ? AND followeeId = ?";
         final String sqlDate = "SELECT DATE_FORMAT(postDate, '%M %d %Y %H:%i %p') as postDate from post WHERE userId = ? ORDER BY postDate DESC LIMIT 1;";
-
+        
         List<Comment> comments = new ArrayList<>();
 
         try (Connection conn = dataSource.getConnection();
+
             PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, postId);
 
@@ -313,6 +312,7 @@ public class PostService {
             }
         } catch (SQLException e) {
             e.printStackTrace();
+            return null;
         }
 
         return comments;
@@ -428,4 +428,25 @@ public class PostService {
         return timestamp.toLocalDateTime().format(DISPLAY_DATE_FORMAT);
     }
 
+    public boolean addComment(String postId, String userId, String content) {
+        final String sql = "INSERT INTO comment (postId, userId, content, commentDate) " +
+            "VALUES " +
+            "( " +
+            "?, ?, ?, NOW()" +
+            " );"
+            ;
+
+        try (Connection conn = dataSource.getConnection();
+            PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+		    pstmt.setString(1, postId);
+        	pstmt.setString(2, userId);
+        	pstmt.setString(3, content);
+
+            return pstmt.executeUpdate() == 1;
+        } catch(SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 }
