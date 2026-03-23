@@ -297,7 +297,7 @@ public class PostService {
                         // if this condition returns true, we can assume isFollow is true
                         isFollowed = true; 
                     }
-                    
+
                     PreparedStatement pstmtDate = conn.prepareStatement(sqlDate);
                     pstmtDate.setString(1, userId);
                     ResultSet dateSet = pstmtDate.executeQuery();
@@ -401,22 +401,27 @@ public class PostService {
     }
 
     private Post buildPost(ResultSet rs, boolean isHearted, boolean isBookmarked) throws SQLException {
+	String postId = rs.getString("postId");
+
         User user = new User(
                 rs.getString("userId"),
                 rs.getString("firstName"),
                 rs.getString("lastName")
         );
 
-        return new Post(
-                rs.getString("postId"),
-                rs.getString("content"),
-                formatTimestamp(rs.getTimestamp("postDate")),
-                user,
-                0,
-                0,
-                isHearted,
-                isBookmarked
-        );
+	int heartsCount = getHeartsCount(postId, dataSource);
+	int commentsCount = getCommentsCount(postId, dataSource);
+
+	return new Post(
+            postId,
+            rs.getString("content"),
+            formatTimestamp(rs.getTimestamp("postDate")),
+            user,
+            heartsCount,
+            commentsCount,
+            isHearted,
+            isBookmarked
+    );
     }
 
     private String formatTimestamp(Timestamp timestamp) {
