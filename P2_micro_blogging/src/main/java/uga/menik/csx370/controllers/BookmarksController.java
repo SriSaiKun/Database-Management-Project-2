@@ -7,13 +7,15 @@ package uga.menik.csx370.controllers;
 
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.ModelAndView;
 
 import uga.menik.csx370.models.Post;
-import uga.menik.csx370.utility.Utility;
+import uga.menik.csx370.services.PostService;
+import uga.menik.csx370.services.UserService;
 
 /**
  * Handles /bookmarks and its sub URLs.
@@ -26,6 +28,14 @@ import uga.menik.csx370.utility.Utility;
 @RequestMapping("/bookmarks")
 public class BookmarksController {
 
+    private final PostService postService;
+    private final UserService userService;
+
+    @Autowired
+    public BookmarksController(PostService postService, UserService userService) {
+        this.postService = postService;
+        this.userService = userService;
+    }
     /**
      * /bookmarks URL itself is handled by this.
      */
@@ -38,13 +48,17 @@ public class BookmarksController {
 
         // Following line populates sample data.
         // You should replace it with actual data from the database.
-        List<Post> posts = Utility.createSamplePostsListWithoutComments();
+        String currentUserId = userService.getLoggedInUser().getUserId();
+        List<Post> posts = postService.getBookmarkedPosts(currentUserId);
         mv.addObject("posts", posts);
 
         // If an error occured, you can set the following property with the
         // error message to show the error message to the user.
         // String errorMessage = "Some error occured!";
         // mv.addObject("errorMessage", errorMessage);
+	   if (posts.isEmpty()) {
+            mv.addObject("isNoContent", true);
+        }
 
         // Enable the following line if you want to show no content message.
         // Do that if your content list is empty.
