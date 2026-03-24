@@ -17,6 +17,7 @@ import org.springframework.web.servlet.ModelAndView;
 
 import uga.menik.csx370.models.Post;
 import uga.menik.csx370.services.PostService;
+import uga.menik.csx370.services.UserService;
 
 /**
  * Handles /hashtagsearch URL and possibly others.
@@ -26,9 +27,12 @@ import uga.menik.csx370.services.PostService;
 @RequestMapping("/hashtagsearch")
 public class HashtagSearchController {
 	private final PostService postService;
+	private final UserService userService;
+    
     @Autowired
-    public HashtagSearchController(PostService postService) {
+    public HashtagSearchController(PostService postService, UserService userService) {
         this.postService = postService;
+        this.userService = userService;
     }
     /**
      * This function handles the /hashtagsearch URL itself.
@@ -47,7 +51,9 @@ public class HashtagSearchController {
 		.distinct()
                 .toList();
 
-        List<Post> posts = postService.searchPostsByHashtags(hashtagList);
+        String userId = userService.getLoggedInUser().getUserId();
+
+        List<Post> posts = postService.searchPostsByHashtags(hashtagList, userId);
         mv.addObject("posts", posts);
 
         if (posts.isEmpty()) {
