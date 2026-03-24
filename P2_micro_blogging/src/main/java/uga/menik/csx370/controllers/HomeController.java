@@ -9,6 +9,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,6 +18,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 
 import uga.menik.csx370.models.Post;
+import uga.menik.csx370.services.PostService;
+import uga.menik.csx370.services.UserService;
 import uga.menik.csx370.utility.Utility;
 
 /**
@@ -33,21 +36,38 @@ public class HomeController {
      * The value to this parameter can be shown to the user as an error message.
      * See notes in HashtagSearchController.java regarding URL parameters.
      */
+    private final UserService userService;
+    private final PostService postService;
+
+    @Autowired
+    public HomeController(UserService userService, PostService postService) {
+        this.userService = userService;
+        this.postService = postService;
+    }
     @GetMapping
     public ModelAndView webpage(@RequestParam(name = "error", required = false) String error) {
         // See notes on ModelAndView in BookmarksController.java.
         ModelAndView mv = new ModelAndView("home_page");
 
+        //get the ID of the logged-in user:
+        String loggedInUserId = userService.getLoggedInUser().getUserId();
+
         // Following line populates sample data.
         // You should replace it with actual data from the database.
-        List<Post> posts = Utility.createSamplePostsListWithoutComments();
+        List<Post> posts = postService.getHomeFeedPosts(loggedInUserId);
         mv.addObject("posts", posts);
 
         // If an error occured, you can set the following property with the
         // error message to show the error message to the user.
         // An error message can be optionally specified with a url query parameter too.
+
         String errorMessage = error;
         mv.addObject("errorMessage", errorMessage);
+
+        // if there is no post to display, then give a no post comment
+        if (posts.isEmpty()) {
+            mv.addObject("isNoContent", true);
+        } //if statement
 
         // Enable the following line if you want to show no content message.
         // Do that if your content list is empty.
@@ -68,13 +88,23 @@ public class HomeController {
     public String createPost(@RequestParam(name = "posttext") String postText) {
         System.out.println("User is creating post: " + postText);
 
-        // Redirect the user if the post creation is a success.
-        // return "redirect:/";
+        //make sure that there are no blank/empty post created
+        if (postText == null || postText.trim().isEmpty()) {
+            String message = URLEncoder.encode("Post cannot be empty.", StandardCharsets.UTF_8);
+            return "redirect:/?error=" + message;
+        }
+        String loggedInUserId = userService.getLoggedInUser().getUserId();
+        boolean success = postService.createPost(loggedInUserId, postText);
 
+        // Redirect the user if the post creation is a success.
+            // return "redirect:/";
         // Redirect the user with an error message if there was an error.
-        String message = URLEncoder.encode("Failed to create the post. Please try again.",
+        if (success) {
+            return "redirect:/";
+        } else {
+            String message = URLEncoder.encode("Failed to create the post. Please try again.",
                 StandardCharsets.UTF_8);
-        return "redirect:/?error=" + message;
-    }
+        return "redirect:/?error=" + message; }
+        }
 
 }

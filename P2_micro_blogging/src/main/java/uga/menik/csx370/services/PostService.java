@@ -427,5 +427,106 @@ public class PostService {
     private String formatTimestamp(Timestamp timestamp) {
         return timestamp.toLocalDateTime().format(DISPLAY_DATE_FORMAT);
     }
+    public List<Post> getHomeFeedPosts(String loggedInUserId) {
+        final String sql =
+                "SELECT p.postId, p.userId, p.content, " +
+                        "DATE_FORMAT(p.postDate, '%b %d, %Y, %I:%i %p') AS postDate " +
+                        "FROM post p " +
+                        "WHERE p.userId = ? " +
+                        "OR p.userId IN (SELECT followeeId FROM follow WHERE followerId = ?) " +
+                        "ORDER BY p.postDate DESC";
 
+        List<Post> posts = new ArrayList<>();
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, loggedInUserId);
+            pstmt.setString(2, loggedInUserId);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    String postId   = rs.getString("postId");
+                    String posterId = rs.getString("userId");
+                    String content  = rs.getString("content");
+                    String postDate = rs.getString("postDate");
+
+                    User    poster       = getPoster(posterId, dataSource);
+                    int     heartCount   = getHeartsCount(postId, dataSource);
+                    int     commentCount = getCommentsCount(postId, dataSource);
+                    boolean hearted      = isHearted(postId, loggedInUserId, dataSource);
+                    boolean bookmarked   = isBookmarked(postId, loggedInUserId, dataSource);
+
+                    posts.add(new Post(postId, content, postDate, poster,
+                            heartCount, commentCount, hearted, bookmarked));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return posts;
+    }
+
+    /**
+     * Inserts a new post for the given user, then links any #hashtags found.
+     * Used by HomeController when the create post form is submitted.
+     */
+    public boolean createPost(String userId, String content) {
+        if (content == null || content.trim().isEmpty()) {
+            return false;
+        }
+
+        final String insertPost =
+                "INSERT INTO post (userId, content, postDate) VALUES (?, ?, NOW())";
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(insertPost, 1)) {
+
+            pstmt.setString(1, userId);
+            pstmt.setString(2, content.trim());
+            pstmt.executeUpdate();
+
+            try (ResultSet keys = pstmt.getGeneratedKeys()) {
+                if (keys.next()) {
+                    long newPostId = keys.getLong(1);
+                    linkHashtags(conn, newPostId, content);
+                }
+            }
+            return true;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
+     * Parses #hashtags from post content and inserts a row into the
+     * hashtag table (postId, tag) for each one found.
+     * Your hashtag table schema: hashtag(postId INT, tag VARCHAR(255))
+     */
+    private void linkHashtags(Connection conn, long postId, String content)
+            throws SQLException {
+
+        final String insertTag =
+                "INSERT IGNORE INTO hashtag (postId, tag) VALUES (?, ?)";
+
+        // Split on whitespace, check each word for a leading #
+        for (String word : content.split("\\s+")) {
+            if (word.startsWith("#") && word.length() > 1) {
+                // Remove any trailing punctuation e.g. "#java!" becomes "java"
+                String tag = word.substring(1)
+                        .replaceAll("[^a-zA-Z0-9_]", "")
+                        .toLowerCase();
+                if (!tag.isEmpty()) {
+                    try (PreparedStatement ps = conn.prepareStatement(insertTag)) {
+                        ps.setLong(1, postId);
+                        ps.setString(2, tag);
+                        ps.executeUpdate();
+                    }
+                }
+            }
+        }
+    }
 }
