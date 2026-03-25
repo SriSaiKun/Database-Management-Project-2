@@ -371,6 +371,24 @@ public class PostService {
         	return true;
     	}
 
+		 public boolean addHeart(String userId, String postId) {
+            if (isHearted(postId, userId, dataSource)) {
+                return true;
+            }
+            final String sql = "INSERT INTO heart (userId, postId) VALUES (?, ?)";
+            
+            try (Connection conn = data.Source.getConnection();
+                 PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                
+                pstmt.setString(1, userId);
+                pstmt.setString(2, postId);
+                
+                return pstmt.executeUpdate() == 1;
+            } catch (SQLException e) {
+                e.printStackTrace();
+                return false;
+        }
+
     final String sql = "DELETE FROM bookmark WHERE userId = ? AND postId = ?";
 
     try (Connection conn = dataSource.getConnection();
