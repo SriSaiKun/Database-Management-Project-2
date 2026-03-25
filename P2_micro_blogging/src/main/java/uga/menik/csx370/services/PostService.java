@@ -499,13 +499,12 @@ public class PostService {
         for (String word : content.split("\\s+")) {
             if (word.startsWith("#") && word.length() > 1) {
                 // Remove any trailing punctuation e.g. "#java!" becomes "java"
-                String tag = word.substring(1)
-                        .replaceAll("[^a-zA-Z0-9_]", "")
-                        .toLowerCase();
-                if (!tag.isEmpty()) {
+                 String cleaned = word.replaceAll("[^#a-zA-Z0-9]", "").toLowerCase();
+
+                if (cleaned.startsWith("#") && cleaned.length() > 1) {
                     try (PreparedStatement ps = conn.prepareStatement(insertTag)) {
                         ps.setLong(1, postId);
-                        ps.setString(2, tag);
+                        ps.setString(2, cleaned);
                         ps.executeUpdate();
                     }
                 }
