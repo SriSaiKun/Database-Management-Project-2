@@ -9,17 +9,13 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.time.format.DateTimeFormatter;
-import java.util.Collections;
 import java.util.ArrayList;
-
+import java.util.Collections;
 import java.util.List;
 
 import javax.sql.DataSource;
 
 import org.springframework.beans.factory.annotation.Autowired;
-
 import org.springframework.stereotype.Service;
 
 import uga.menik.csx370.models.Comment;
@@ -35,8 +31,6 @@ import uga.menik.csx370.models.User;
 public class PostService {
 
     private final DataSource dataSource;
-    private static final DateTimeFormatter DISPLAY_DATE_FORMAT =
-            DateTimeFormatter.ofPattern("MMM dd, yyyy, hh:mm a");
 
     @Autowired
     public PostService(DataSource dataSource) {
@@ -46,15 +40,14 @@ public class PostService {
     public List<Post> getBookmarkedPosts(String currentUserId) {
         List<Post> posts = new ArrayList<>();
 
-        final String sql = """
-            SELECT p.postId, p.content, p.postDate,
-                   u.userId, u.firstName, u.lastName
-            FROM bookmark b
-            JOIN post p ON b.postId = p.postId
-            JOIN user u ON p.userId = u.userId
-            WHERE b.userId = ?
-            ORDER BY p.postDate DESC
-        """;
+        final String sql =
+            "SELECT p.postId, p.content, DATE_FORMAT(p.postDate, '%b %d, %Y %h:%i %p') as postDate, " +
+                   "u.userId, u.firstName, u.lastName " +
+            "FROM bookmark b " +
+            "JOIN post p ON b.postId = p.postId " +
+            "JOIN user u ON p.userId = u.userId " + 
+            "WHERE b.userId = ? " +
+            "ORDER BY p.postDate DESC";
 
         try (Connection conn = dataSource.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -213,7 +206,7 @@ public class PostService {
 
     public Post getPost(String postId, String userId) {
         final String sql = "SELECT postId, userId, content," +
-        "DATE_FORMAT(postDate, '%M %d %Y %H:%i %p') as postDate " +
+        "DATE_FORMAT(postDate, '%b %d, %Y %h:%i %p') as postDate " +
         "FROM post " +
         "WHERE postId = ?";
         
@@ -249,24 +242,22 @@ public class PostService {
     public List<Comment> getComments(String postId, String posterId) {
 
         final String sql = 
-            "SELECT commentId, userId, content, commentDate " +
-            "FROM comment " + 
-            "WHERE postId = ?" +
-            "ORDER BY commentDate ASC" 
+            "SELECT c.commentId as commentId, c.userId as userId, c.content as content, " +
+            "DATE_FORMAT(c.commentDate, '%b %d, %Y %h:%i %p') as commentDate, " +
+            "u.firstName, u.lastName " +
+            "FROM comment as c, user as u " + 
+            "WHERE c.postId = ? AND c.userId = u.userId " +
+            "ORDER BY commentDate desc;" 
             ;
 
-        final String sqlUser = "SELECT firstName, lastName " +
-        "FROM user " +
-        "WHERE userId = ?"
-        ;
         final String sqlIsFollowed = "SELECT True as followed " +
         "FROM follow " +
         "WHERE followerId = ? AND followeeId = ?";
-        final String sqlDate = "SELECT DATE_FORMAT(postDate, '%M %d %Y %H:%i %p') as postDate from post WHERE userId = ? ORDER BY postDate DESC LIMIT 1;";
-
+        final String sqlDate = "SELECT DATE_FORMAT(postDate, '%b %d, %Y %h:%i %p') as postDate from post WHERE userId = ? ORDER BY postDate DESC LIMIT 1;";
         List<Comment> comments = new ArrayList<>();
 
         try (Connection conn = dataSource.getConnection();
+
             PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, postId);
 
@@ -276,21 +267,19 @@ public class PostService {
                     String userId = rs.getString("userId");
                     String content = rs.getString("content");
                     String commentDate = rs.getString("commentDate");
-
-                    PreparedStatement pstmtUser = conn.prepareStatement(sqlUser);
-                    pstmtUser.setString(1, userId);
-                    ResultSet userSet = pstmtUser.executeQuery();
-                    String firstName = "", lastName = "";
-                    if (userSet.next()) {
-                        firstName = userSet.getString("firstName");
-                        lastName = userSet.getString("lastName");
-                    }
+                    String firstName = rs.getString("firstName");
+                    String lastName = rs.getString("lastName");
 
                     PreparedStatement pstmtFollow = conn.prepareStatement(sqlIsFollowed);
                     pstmtFollow.setString(1, posterId);
                     pstmtFollow.setString(2, userId);
                     ResultSet followSet = pstmtFollow.executeQuery();
                     Boolean isFollowed = false;
+
+                    PreparedStatement pstmtDate = conn.prepareStatement(sqlDate);
+                    pstmtDate.setString(1, userId);
+                    ResultSet dateSet = pstmtDate.executeQuery();
+                    String userLastPostDate = "Unknown"; 
                     if (followSet.next()) {
                         // Because a row will only be returned when the Poster's userId
                         // == followerId AND the commenter's user id == followeeId,
@@ -298,27 +287,24 @@ public class PostService {
                         isFollowed = true; 
                     }
 
-                    PreparedStatement pstmtDate = conn.prepareStatement(sqlDate);
-                    pstmtDate.setString(1, userId);
-                    ResultSet dateSet = pstmtDate.executeQuery();
-                    String date = "";
                     if (dateSet.next()) {
-                        date = dateSet.getString("postDate");
+                        userLastPostDate = dateSet.getString("postDate");
                     }
 
-                    FollowableUser user = new FollowableUser(userId, firstName, lastName, isFollowed, date);
+                    FollowableUser user = new FollowableUser(userId, firstName, lastName, isFollowed, userLastPostDate);
 
                     comments.add(new Comment(commentId, content, commentDate, user));
                 }
             }
         } catch (SQLException e) {
             e.printStackTrace();
+            return null;
         }
 
         return comments;
     }
 
-    public List<Post> searchPostsByHashtags(List<String> hashtags) {
+    public List<Post> searchPostsByHashtags(List<String> hashtags, String userId) {
         List<Post> posts = new ArrayList<>();
 
         if (hashtags == null || hashtags.isEmpty()) {
@@ -327,17 +313,17 @@ public class PostService {
 
         String placeholders = String.join(",", Collections.nCopies(hashtags.size(), "?"));
 
-        final String sql = String.format("""
-            SELECT p.postId, p.content, p.postDate,
-                   u.userId, u.firstName, u.lastName
-            FROM post p
-            JOIN user u ON p.userId = u.userId
-            JOIN hashtag h ON p.postId = h.postId
-            WHERE h.tag IN (%s)
-            GROUP BY p.postId, p.content, p.postDate, u.userId, u.firstName, u.lastName
-            HAVING COUNT(DISTINCT h.tag) = ?
-            ORDER BY p.postDate DESC
-        """, placeholders);
+        final String sql = 
+            "SELECT p.postId as postId, p.content, DATE_FORMAT(p.postDate, '%b %d, %Y, %I:%i %p') AS postDate, " +
+                   "u.userId, u.firstName, u.lastName " +
+            "FROM post p " + 
+            "JOIN user u ON p.userId = u.userId " +
+            "JOIN hashtag h ON p.postId = h.postId " +
+            "WHERE h.tag IN (" + placeholders + ") " +
+            "GROUP BY p.postId, p.content, p.postDate, u.userId, u.firstName, u.lastName " +
+            "HAVING COUNT(DISTINCT h.tag) = ? " +
+            "ORDER BY p.postDate DESC";
+        
 
         try (Connection conn = dataSource.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -350,7 +336,7 @@ public class PostService {
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    posts.add(buildPost(rs, false, false));
+                    posts.add(buildPost(rs, isHearted(rs.getString("postId"), userId, dataSource), false));
                 }
             }
         } catch (SQLException e) {
@@ -415,7 +401,7 @@ public class PostService {
 	return new Post(
             postId,
             rs.getString("content"),
-            formatTimestamp(rs.getTimestamp("postDate")),
+            rs.getString("postDate"),
             user,
             heartsCount,
             commentsCount,
@@ -424,9 +410,6 @@ public class PostService {
     );
     }
 
-    private String formatTimestamp(Timestamp timestamp) {
-        return timestamp.toLocalDateTime().format(DISPLAY_DATE_FORMAT);
-    }
     public List<Post> getHomeFeedPosts(String loggedInUserId) {
         final String sql =
                 "SELECT p.postId, p.userId, p.content, " +
@@ -527,6 +510,27 @@ public class PostService {
                     }
                 }
             }
+        }
+    }
+    public boolean addComment(String postId, String userId, String content) {
+        final String sql = "INSERT INTO comment (postId, userId, content, commentDate) " +
+            "VALUES " +
+            "( " +
+            "?, ?, ?, NOW()" +
+            " );"
+            ;
+
+        try (Connection conn = dataSource.getConnection();
+            PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+		    pstmt.setString(1, postId);
+        	pstmt.setString(2, userId);
+        	pstmt.setString(3, content);
+
+            return pstmt.executeUpdate() == 1;
+        } catch(SQLException e) {
+            e.printStackTrace();
+            return false;
         }
     }
 }
