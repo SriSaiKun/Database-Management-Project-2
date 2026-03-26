@@ -159,7 +159,7 @@ public class PostController {
         return "redirect:/post/" + postId + "?error=" + message;
     }
 
-    @PostMapping(" /heart")
+    @PostMapping("/heart")
     public String heartPost(@RequestParam("postId") String postId) {
         String userId = userService.getLoggedInUser().getUserId();
         
