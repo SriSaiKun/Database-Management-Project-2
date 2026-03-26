@@ -124,13 +124,19 @@ public class PostController {
         System.out.println("\tpostId: " + postId);
         System.out.println("\tisAdd: " + isAdd);
 
-        // Redirect the user if the comment adding is a success.
-        // return "redirect:/post/" + postId;
-        // Redirect the user with an error message if there was an error.
+        String currentUserId = userService.getLoggedInUser().getUserId();
+
+        boolean isSuccess = isAdd
+            ? postService.addHeart(currentUserId, postId)
+            : postService.removeHeart(currentUserId, postId);
+
+        if (isSuccess) {
+            return "redirect:/post/" + postId;
+        }
         String message = URLEncoder.encode("Failed to (un)like the post. Please try again.",
-                StandardCharsets.UTF_8);
+            StandardCharsets.UTF_8);
         return "redirect:/post/" + postId + "?error=" + message;
-    }
+         }
 
     /**
      * Handles bookmarking posts. See comments on webpage function to see how
@@ -157,13 +163,5 @@ public class PostController {
         String message = URLEncoder.encode("Failed to (un)bookmark the post. Please try again.",
                 StandardCharsets.UTF_8);
         return "redirect:/post/" + postId + "?error=" + message;
-    }
-
-    @PostMapping("/heart")
-    public String heartPost(@RequestParam("postId") String postId) {
-        String userId = userService.getLoggedInUser().getUserId();
-        
-        postService.addHeart(userId, postId);
-        return "redirect:/home";
     }
 }
