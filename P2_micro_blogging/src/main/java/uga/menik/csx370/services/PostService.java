@@ -370,43 +370,46 @@ public class PostService {
         if (!isBookmarked(postId, userId, dataSource)) {
         	return true;
     	}
-
-		 public boolean addHeart(String userId, String postId) {
+       
+        public boolean addHeart(String userId, String postId) {
             if (isHearted(postId, userId, dataSource)) {
                 return true;
             }
+
             final String sql = "INSERT INTO heart (userId, postId) VALUES (?, ?)";
-            
-            try (Connection conn = data.Source.getConnection();
+
+            try (Connection conn = dataSource.getConnection();
                  PreparedStatement pstmt = conn.prepareStatement(sql)) {
-                
+
                 pstmt.setString(1, userId);
                 pstmt.setString(2, postId);
-                
+
                 return pstmt.executeUpdate() == 1;
             } catch (SQLException e) {
                 e.printStackTrace();
                 return false;
+            }
         }
-		 public boolean removeHeart(String userId, String postId) {
-    		if (!isHearted(postId, userId, dataSource)) {
-		        return true;
-  	  }
 
-   		 final String sql = "DELETE FROM heart WHERE userId = ? AND postId = ?";
+        public boolean removeHeart(String userId, String postId) {
+            if (!isHearted(postId, userId, dataSource)) {
+                return true;
+            }
 
-   			 try (Connection conn = dataSource.getConnection();
-       			  PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            final String sql = "DELETE FROM heart WHERE userId = ? AND postId = ?";
 
-       				pstmt.setString(1, userId);
-        			pstmt.setString(2, postId);
-	
-       		 return pstmt.executeUpdate() == 1;
-   			 } catch (SQLException e) {
-      			  e.printStackTrace();
-       				 return false;
-    }
-}
+            try (Connection conn = dataSource.getConnection();
+                 PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+                pstmt.setString(1, userId);
+                pstmt.setString(2, postId);
+
+                return pstmt.executeUpdate() == 1;
+            } catch (SQLException e) {
+                e.printStackTrace();
+                return false;
+            }
+        }
 
     final String sql = "DELETE FROM bookmark WHERE userId = ? AND postId = ?";
 
@@ -533,15 +536,13 @@ public class PostService {
                 "INSERT IGNORE INTO hashtag (postId, tag) VALUES (?, ?)";
 
         // Split on whitespace, check each word for a leading #
-        for (String word : content.split("\\s+")) {
-            if (word.startsWith("#") && word.length() > 1) {
-                // Remove any trailing punctuation e.g. "#java!" becomes "java"
-                 String cleaned = word.replaceAll("[^#a-zA-Z0-9]", "").toLowerCase();
+            for (String word : content.split("\\s+")) {
+                String cleaned = word.replaceAll("[^#a-zA-Z0-9_]", "").toLowerCase();
 
                 if (cleaned.startsWith("#") && cleaned.length() > 1) {
                     try (PreparedStatement ps = conn.prepareStatement(insertTag)) {
                         ps.setLong(1, postId);
-                        ps.setString(2, cleaned);
+                        ps.setString(2, cleaned); // ✅ keeps the #
                         ps.executeUpdate();
                     }
                 }
@@ -570,3 +571,4 @@ public class PostService {
         }
     }
 }
+
