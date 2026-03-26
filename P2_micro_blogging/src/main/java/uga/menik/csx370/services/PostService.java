@@ -542,7 +542,7 @@ public class PostService {
                 if (cleaned.startsWith("#") && cleaned.length() > 1) {
                     try (PreparedStatement ps = conn.prepareStatement(insertTag)) {
                         ps.setLong(1, postId);
-                        ps.setString(2, cleaned); // ✅ keeps the #
+                        ps.setString(2, cleaned);
                         ps.executeUpdate();
                     }
                 }
