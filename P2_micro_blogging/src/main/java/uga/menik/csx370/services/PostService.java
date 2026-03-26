@@ -368,48 +368,63 @@ public class PostService {
 
     public boolean removeBookmark(String userId, String postId) {
         if (!isBookmarked(postId, userId, dataSource)) {
-        	return true;
-    	}
-       
-        public boolean addHeart(String userId, String postId) {
-            if (isHearted(postId, userId, dataSource)) {
-                return true;
-            }
-
-            final String sql = "INSERT INTO heart (userId, postId) VALUES (?, ?)";
-
-            try (Connection conn = dataSource.getConnection();
-                 PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
-                pstmt.setString(1, userId);
-                pstmt.setString(2, postId);
-
-                return pstmt.executeUpdate() == 1;
-            } catch (SQLException e) {
-                e.printStackTrace();
-                return false;
-            }
+            return true;
         }
 
-        public boolean removeHeart(String userId, String postId) {
-            if (!isHearted(postId, userId, dataSource)) {
-                return true;
-            }
+        final String sql = "DELETE FROM bookmark WHERE userId = ? AND postId = ?";
 
-            final String sql = "DELETE FROM heart WHERE userId = ? AND postId = ?";
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
-            try (Connection conn = dataSource.getConnection();
-                 PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, Integer.parseInt(userId));
+            pstmt.setInt(2, Integer.parseInt(postId));
+            return pstmt.executeUpdate() == 1;
 
-                pstmt.setString(1, userId);
-                pstmt.setString(2, postId);
-
-                return pstmt.executeUpdate() == 1;
-            } catch (SQLException e) {
-                e.printStackTrace();
-                return false;
-            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
         }
+    }
+
+    public boolean addHeart(String userId, String postId) {
+        if (isHearted(postId, userId, dataSource)) {
+            return true;
+        }
+
+        final String sql = "INSERT INTO heart (userId, postId) VALUES (?, ?)";
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, userId);
+            pstmt.setString(2, postId);
+
+            return pstmt.executeUpdate() == 1;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean removeHeart(String userId, String postId) {
+        if (!isHearted(postId, userId, dataSource)) {
+            return true;
+        }
+
+        final String sql = "DELETE FROM heart WHERE userId = ? AND postId = ?";
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setString(1, userId);
+            pstmt.setString(2, postId);
+
+            return pstmt.executeUpdate() == 1;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 
     final String sql = "DELETE FROM bookmark WHERE userId = ? AND postId = ?";
 
