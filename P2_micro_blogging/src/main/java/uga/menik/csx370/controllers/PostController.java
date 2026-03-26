@@ -158,4 +158,12 @@ public class PostController {
                 StandardCharsets.UTF_8);
         return "redirect:/post/" + postId + "?error=" + message;
     }
+
+    @PostMapping(" /heart")
+    public String heartPost(@RequestParam("postId") String postId) {
+        String userId = userService.getLoggedInUser().getUserId();
+        
+        postService.addHeart(userId, postId);
+        return "redirect:/home";
+    }
 }
