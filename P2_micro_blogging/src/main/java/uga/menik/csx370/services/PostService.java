@@ -375,7 +375,6 @@ public class PostService {
 
         try (Connection conn = dataSource.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
             pstmt.setInt(1, Integer.parseInt(userId));
             pstmt.setInt(2, Integer.parseInt(postId));
             return pstmt.executeUpdate() == 1;
@@ -426,7 +425,7 @@ public class PostService {
         }
     }
 
-    final String sql = "DELETE FROM bookmark WHERE userId = ? AND postId = ?";
+    /*final String sql = "DELETE FROM bookmark WHERE userId = ? AND postId = ?";
 
     try (Connection conn = dataSource.getConnection();
          PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -439,30 +438,30 @@ public class PostService {
         	e.printStackTrace();
         	return false;
     	}
-    }
+    }*/
 
     private Post buildPost(ResultSet rs, boolean isHearted, boolean isBookmarked) throws SQLException {
-	String postId = rs.getString("postId");
+        String postId = rs.getString("postId");
 
-        User user = new User(
-                rs.getString("userId"),
-                rs.getString("firstName"),
-                rs.getString("lastName")
+            User user = new User(
+                    rs.getString("userId"),
+                    rs.getString("firstName"),
+                    rs.getString("lastName")
+            );
+
+        int heartsCount = getHeartsCount(postId, dataSource);
+        int commentsCount = getCommentsCount(postId, dataSource);
+
+        return new Post(
+                postId,
+                rs.getString("content"),
+                rs.getString("postDate"),
+                user,
+                heartsCount,
+                commentsCount,
+                isHearted,
+                isBookmarked
         );
-
-	int heartsCount = getHeartsCount(postId, dataSource);
-	int commentsCount = getCommentsCount(postId, dataSource);
-
-	return new Post(
-            postId,
-            rs.getString("content"),
-            rs.getString("postDate"),
-            user,
-            heartsCount,
-            commentsCount,
-            isHearted,
-            isBookmarked
-    );
     }
 
     public List<Post> getHomeFeedPosts(String loggedInUserId) {
@@ -563,7 +562,8 @@ public class PostService {
                 }
             }
         }
-    }
+
+
     public boolean addComment(String postId, String userId, String content) {
         final String sql = "INSERT INTO comment (postId, userId, content, commentDate) " +
             "VALUES " +
