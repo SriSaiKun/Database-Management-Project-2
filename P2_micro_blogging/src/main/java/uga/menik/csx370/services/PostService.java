@@ -425,21 +425,6 @@ public class PostService {
         }
     }
 
-    /*final String sql = "DELETE FROM bookmark WHERE userId = ? AND postId = ?";
-
-    try (Connection conn = dataSource.getConnection();
-         PreparedStatement pstmt = conn.prepareStatement(sql)) {
-
-		pstmt.setInt(1, Integer.parseInt(userId));
-        	pstmt.setInt(2, Integer.parseInt(postId));
-        	return pstmt.executeUpdate() == 1;
-
-    	} catch (SQLException e) {
-        	e.printStackTrace();
-        	return false;
-    	}
-    }*/
-
     private Post buildPost(ResultSet rs, boolean isHearted, boolean isBookmarked) throws SQLException {
         String postId = rs.getString("postId");
 
