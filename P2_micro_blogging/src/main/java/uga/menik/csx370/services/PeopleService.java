@@ -103,4 +103,69 @@ public class PeopleService {
         // return Utility.createSampleFollowableUserList();
     }
 
+    public boolean isFollowed(String currentUserId, String userId) {
+       final String sql = "SELECT * " +
+        "FROM follow " +
+        "WHERE followerId = ? AND followeeId = ?";
+        
+        try (Connection conn = dataSource.getConnection();
+                PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            // Following line replaces the first place holder with username.
+            pstmt.setString(1, currentUserId);
+            pstmt.setString(2, userId);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                // Traverse the result rows one at a time.
+                // Note: This specific while loop will only run at most once 
+                // since (followerId, followeeId) is unique
+                if (rs.next()) {
+                    return true;
+                }
+            }
+        } catch (SQLException e) {
+                e.printStackTrace();
+        }
+        return false;
+    }
+
+    public boolean addFollower(String currentUserId, String userId) {
+        if (isFollowed(currentUserId, userId)) {
+            return true;
+        } else {
+            final String sql = "INSERT INTO follow (followerId, followeeId) VALUES (?, ?)";
+
+            try (Connection conn = dataSource.getConnection();
+                PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+                    pstmt.setString(1, currentUserId);
+                    pstmt.setString(2, userId);
+                    pstmt.executeUpdate();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    return false;
+                }
+            return true;
+        }
+    }
+
+    public boolean removeFollower(String currentUserId, String userId) {
+        if (!isFollowed(currentUserId, userId)) {
+            return true;
+        }
+
+        final String sql = "DELETE FROM follow WHERE followerId = ? AND followeeId = ?";
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, currentUserId);
+            pstmt.setString(2, userId);
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+        return true;
+    }
+
 }

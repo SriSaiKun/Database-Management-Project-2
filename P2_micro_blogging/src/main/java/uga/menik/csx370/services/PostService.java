@@ -570,5 +570,51 @@ public class PostService {
             return false;
         }
     }
+
+    public List<Post> getSortedPosts(String userId, String sortBy) {
+        List<Post> posts = new ArrayList<>();
+
+        String orderByClause;
+        switch (sortBy.toLowerCase()) {
+            case "newest":
+                orderByClause = "p.postDate DESC";
+                break;
+            case "oldest":
+                orderByClause = "p.postDate ASC";
+                break;
+            case "likes":
+                orderByClause = "(SELECT COUNT(*) FROM heart h WHERE h.postId = p.postId) DESC";
+                break;
+            case "comments":
+                orderByClause = "(SELECT COUNT(*) FROM comment c WHERE c.postId = p.postId) DESC";
+                break;
+            default:
+                orderByClause = "p.postDate DESC"; // Default to newest
+        }
+
+        final String sql =
+            "SELECT p.postId postId, p.userId userId, p.content content, DATE_FORMAT(p.postDate, '%b %d, %Y, %I:%i %p') AS postDate, " +
+                "u.firstName firstName, u.lastName lastName " +
+            "FROM post p, user u " +
+            "WHERE p.userId = u.userId " +
+            "ORDER BY " + orderByClause;
+
+        try (Connection conn = dataSource.getConnection();
+            PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    String postId = rs.getString("postId");
+                    boolean isHearted = isHearted(postId, userId, dataSource);
+                    boolean isBookmarked = isBookmarked(postId, userId, dataSource);
+                    posts.add(buildPost(rs, isHearted, isBookmarked));
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println(sql);
+            e.printStackTrace();
+        }
+    return posts;
+    }
 }
 

@@ -1,8 +1,8 @@
 /**
-Copyright (c) 2024 Sami Menik, PhD. All rights reserved.
+ * Copyright (c) 2024 Sami Menik, PhD. All rights reserved.
 
-This is a project developed by Dr. Menik to give the students an opportunity to apply database concepts learned in the class in a real world project. Permission is granted to host a running version of this software and to use images or videos of this work solely for the purpose of demonstrating the work to potential employers. Any form of reproduction, distribution, or transmission of the software's source code, in part or whole, without the prior written consent of the copyright owner, is strictly prohibited.
-*/
+ *  *This is a project developed by Dr. Menik to give the students an opportunity to apply database concepts learned in the class in a real world project. Permission is granted to host a running version of this software and to use images or videos of this work solely for the purpose of demonstrating the work to potential employers. Any form of reproduction, distribution, or transmission of the software's source code, in part or whole, without the prior written consent of the copyright owner, is strictly prohibited.
+ */
 package uga.menik.csx370.controllers;
 
 import java.net.URLEncoder;
@@ -43,10 +43,10 @@ public class PeopleController {
 
     /**
      * Serves the /people web page.
-     * 
-     * Note that this accepts a URL parameter called error.
-     * The value to this parameter can be shown to the user as an error message.
-     * See notes in HashtagSearchController.java regarding URL parameters.
+     *
+     * Note that this accepts a URL parameter called error. The value to this
+     * parameter can be shown to the user as an error message. See notes in
+     * HashtagSearchController.java regarding URL parameters.
      */
     @GetMapping
     public ModelAndView webpage(@RequestParam(name = "error", required = false) String error) {
@@ -72,19 +72,18 @@ public class PeopleController {
         // Enable the following line if you want to show no content message.
         // Do that if your content list is empty.
         // mv.addObject("isNoContent", true);
-        
         return mv;
     }
 
     /**
-     * This function handles user follow and unfollow.
-     * Note the URL has parameters defined as variables ie: {userId} and {isFollow}.
-     * Follow and unfollow is handled by submitting a get type form to this URL 
-     * by specifing the userId and the isFollow variables.
-     * Learn more here: https://www.w3schools.com/tags/att_form_method.asp
-     * An example URL that is handled by this unction looks like below:
-     * http://localhost:8081/people/1/follow/false
-     * The above URL assigns 1 to userId and false to isFollow.
+     * This function handles user follow and unfollow. Note the URL has
+     * parameters defined as variables ie: {userId} and {isFollow}. Follow and
+     * unfollow is handled by submitting a get type form to this URL by
+     * specifing the userId and the isFollow variables. Learn more here:
+     * https://www.w3schools.com/tags/att_form_method.asp An example URL that is
+     * handled by this unction looks like below:
+     * http://localhost:8081/people/1/follow/false The above URL assigns 1 to
+     * userId and false to isFollow.
      */
     @GetMapping("{userId}/follow/{isFollow}")
     public String followUnfollowUser(@PathVariable("userId") String userId,
@@ -93,13 +92,19 @@ public class PeopleController {
         System.out.println("\tuserId: " + userId);
         System.out.println("\tisFollow: " + isFollow);
 
-        // Redirect the user if the comment adding is a success.
-        // return "redirect:/people";
+        String currentUserId = userService.getLoggedInUser().getUserId();
 
-        // Redirect the user with an error message if there was an error.
-        String message = URLEncoder.encode("Failed to (un)follow the user. Please try again.",
-                StandardCharsets.UTF_8);
-        return "redirect:/people?error=" + message;
+        boolean isSuccess = isFollow
+                ? peopleService.addFollower(currentUserId, userId)
+                : peopleService.removeFollower(currentUserId, userId);
+
+        if (isSuccess) {
+            return "redirect:/people";
+        } else {
+            String message = URLEncoder.encode("Failed to (un)bookmark the post. Please try again.",
+                    StandardCharsets.UTF_8);
+            return "redirect:/people_error=" + message;
+        }
     }
 
 }

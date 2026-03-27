@@ -60,7 +60,7 @@ public class PostController {
 
         String currentUserId = user.getUserId();
         List<Comment> comments = postService.getComments(postId, currentUserId);
-        if (comments != null) {
+        if (comments != null && !comments.isEmpty()) {
             Post post = postService.getPost(postId, user.getUserId());
             if (post != null) {
                 String postContent = post.getContent();
@@ -81,6 +81,8 @@ public class PostController {
             // An error message can be optionally specified with a url query parameter too.
             String errorMessage = error;
             mv.addObject("errorMessage", errorMessage);
+        } else {
+            mv.addObject("isNoContent", true);
         }
             
         return mv;
