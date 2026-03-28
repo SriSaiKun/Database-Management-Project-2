@@ -33,7 +33,7 @@ public class ProfileService {
     // Retrieves the post details (postId, content, postDate) and the user details (userId, firstName, lastName).
     // Filters results to only include posts by the specified user, ordered most recent first.
     public List<Post> getPostsForUser(String userId) {
-        final String sql = "SELECT p.postId, p.content, DATE_FORMAT(p.postDate, '%b %d, %Y %h:%i %p') as postDate," +
+        final String sql = "SELECT p.postId, p.content, DATE_FORMAT(p.postDate, '%b %d, %Y, %h:%i %p') as postDate," +
                            "u.userId, u.firstName, u.lastName " +
                            "FROM post p JOIN user u ON p.userId = u.userId " +
                            "WHERE p.userId = ? " +

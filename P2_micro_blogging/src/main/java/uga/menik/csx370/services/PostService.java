@@ -40,7 +40,7 @@ public class PostService {
         List<Post> posts = new ArrayList<>();
 
         final String sql
-                = "SELECT p.postId, p.content, DATE_FORMAT(p.postDate, '%b %d, %Y %h:%i %p') as postDate, "
+                = "SELECT p.postId, p.content, DATE_FORMAT(p.postDate, '%b %d, %Y, %h:%i %p') as postDate, "
                 + "u.userId, u.firstName, u.lastName "
                 + "FROM bookmark b "
                 + "JOIN post p ON b.postId = p.postId "
@@ -199,7 +199,7 @@ public class PostService {
 
     public Post getPost(String postId, String userId) {
         final String sql = "SELECT postId, userId, content,"
-                + "DATE_FORMAT(postDate, '%b %d, %Y %h:%i %p') as postDate "
+                + "DATE_FORMAT(postDate, '%b %d, %Y, %h:%i %p') as postDate "
                 + "FROM post "
                 + "WHERE postId = ?";
 
@@ -235,7 +235,7 @@ public class PostService {
 
         final String sql
                 = "SELECT c.commentId as commentId, c.userId as userId, c.content as content, "
-                + "DATE_FORMAT(c.commentDate, '%b %d, %Y %h:%i %p') as commentDate, "
+                + "DATE_FORMAT(c.commentDate, '%b %d, %Y, %h:%i %p') as commentDate, "
                 + "u.firstName, u.lastName "
                 + "FROM comment as c, user as u "
                 + "WHERE c.postId = ? AND c.userId = u.userId "
@@ -244,7 +244,7 @@ public class PostService {
         final String sqlIsFollowed = "SELECT True as followed "
                 + "FROM follow "
                 + "WHERE followerId = ? AND followeeId = ?";
-        final String sqlDate = "SELECT DATE_FORMAT(postDate, '%b %d, %Y %h:%i %p') as postDate from post WHERE userId = ? ORDER BY postDate DESC LIMIT 1;";
+        final String sqlDate = "SELECT DATE_FORMAT(postDate, '%b %d, %Y, %h:%i %p') as postDate from post WHERE userId = ? ORDER BY postDate DESC LIMIT 1;";
         List<Comment> comments = new ArrayList<>();
 
         try (Connection conn = dataSource.getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
