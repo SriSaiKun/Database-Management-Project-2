@@ -18,9 +18,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 
 import uga.menik.csx370.models.Post;
+import uga.menik.csx370.models.User;
 import uga.menik.csx370.services.PostService;
 import uga.menik.csx370.services.UserService;
-import uga.menik.csx370.utility.Utility;
 
 /**
  * This controller handles the home page and some of it's sub URLs.
@@ -72,6 +72,40 @@ public class HomeController {
         // Enable the following line if you want to show no content message.
         // Do that if your content list is empty.
         // mv.addObject("isNoContent", true);
+
+        return mv;
+    }
+
+    /**
+     * This function handles the /sortedposts URL.
+     *
+     */
+    @GetMapping("/sortedHomePosts")
+    public ModelAndView webpage(@RequestParam(name = "sortBy", required = true) String sortBy,
+            @RequestParam(name = "error", required = false) String error) {
+
+        // See notes on ModelAndView in BookmarksController.java.
+        ModelAndView mv = new ModelAndView("home_page");
+        User user = userService.getLoggedInUser();
+
+        String currentUserId = user.getUserId();
+        List<Post> posts = postService.getSortedHomePosts(currentUserId, sortBy);
+        if (posts == null) {
+            String errorMessage = "Something went wrong.\n" + error;
+            mv.addObject("errorMessage", errorMessage);
+            return mv;
+        } else if (posts.isEmpty()) {
+            mv.addObject("isNoContent", true);
+        } else {
+            mv.addObject("posts", posts);
+        }
+
+        // Pass data for maintaining sortBy selection
+        mv.addObject("currentSortBy", sortBy);
+        mv.addObject("isNewest", "newest".equals(sortBy));
+        mv.addObject("isOldest", "oldest".equals(sortBy));
+        mv.addObject("isLikes", "likes".equals(sortBy));
+        mv.addObject("isComments", "comments".equals(sortBy));
 
         return mv;
     }

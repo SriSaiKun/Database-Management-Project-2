@@ -607,21 +607,25 @@ public class PostService {
         List<Post> posts = new ArrayList<>();
 
         String orderByClause;
-        switch (sortBy.toLowerCase()) {
-            case "newest":
-                orderByClause = "p.postDate DESC";
-                break;
-            case "oldest":
-                orderByClause = "p.postDate ASC";
-                break;
-            case "likes":
-                orderByClause = "(SELECT COUNT(*) FROM heart h WHERE h.postId = p.postId) DESC";
-                break;
-            case "comments":
-                orderByClause = "(SELECT COUNT(*) FROM comment c WHERE c.postId = p.postId) DESC";
-                break;
-            default:
-                orderByClause = "p.postDate DESC"; // Default to newest
+        if (sortBy == null) {
+            orderByClause = "p.postDate DESC";
+        } else {
+            switch (sortBy.toLowerCase()) {
+                case "newest":
+                    orderByClause = "p.postDate DESC";
+                    break;
+                case "oldest":
+                    orderByClause = "p.postDate ASC";
+                    break;
+                case "likes":
+                    orderByClause = "(SELECT COUNT(*) FROM heart h WHERE h.postId = p.postId) DESC";
+                    break;
+                case "comments":
+                    orderByClause = "(SELECT COUNT(*) FROM comment c WHERE c.postId = p.postId) DESC";
+                    break;
+                default:
+                    orderByClause = "p.postDate DESC"; // Default to newest
+            }
         }
 
         final String sql

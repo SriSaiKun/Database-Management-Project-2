@@ -36,18 +36,19 @@ public class AllPostsController {
     }
 
     /**
-     * This function handles the /sortedposts URL.
+     * This function handles the /allPosts URL.
      *
      */
     @GetMapping
-    public ModelAndView webpage(@RequestParam(name = "error", required = false) String error) {
+    public ModelAndView webpage(@RequestParam(name = "sortBy", required = false) String sortBy,
+            @RequestParam(name = "error", required = false) String error) {
 
         // See notes on ModelAndView in BookmarksController.java.
         ModelAndView mv = new ModelAndView("all_posts");
         User user = userService.getLoggedInUser();
 
         String currentUserId = user.getUserId();
-        List<Post> posts = postService.getAllSortedPosts(currentUserId, "");
+        List<Post> posts = postService.getAllSortedPosts(currentUserId, sortBy);
         if (posts == null) {
             String errorMessage = "Something went wrong.\n" + error;
             mv.addObject("errorMessage", errorMessage);
@@ -57,6 +58,13 @@ public class AllPostsController {
         } else {
             mv.addObject("posts", posts);
         }
+
+        // Pass data for maintaining sortBy selection
+        mv.addObject("currentSortBy", sortBy);
+        mv.addObject("isNewest", "newest".equals(sortBy));
+        mv.addObject("isOldest", "oldest".equals(sortBy));
+        mv.addObject("isLikes", "likes".equals(sortBy));
+        mv.addObject("isComments", "comments".equals(sortBy));
 
         return mv;
     }
