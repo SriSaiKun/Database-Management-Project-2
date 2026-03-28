@@ -23,14 +23,14 @@ import uga.menik.csx370.services.UserService;
  * Handles /post URL and its sub urls.
  */
 @Controller
-@RequestMapping("/sortedposts")
-public class SortedPostsController {
+@RequestMapping("/allPosts")
+public class AllPostsController {
 
     private final PostService postService;
     private final UserService userService;
 
     @Autowired
-    public SortedPostsController(PostService postService, UserService userService) {
+    public AllPostsController(PostService postService, UserService userService) {
         this.postService = postService;
         this.userService = userService;
     }
@@ -40,15 +40,14 @@ public class SortedPostsController {
      *
      */
     @GetMapping
-    public ModelAndView webpage(@RequestParam(name = "sortBy", required = true) String sortBy,
-            @RequestParam(name = "error", required = false) String error) {
+    public ModelAndView webpage(@RequestParam(name = "error", required = false) String error) {
 
         // See notes on ModelAndView in BookmarksController.java.
-        ModelAndView mv = new ModelAndView("home_page");
+        ModelAndView mv = new ModelAndView("all_posts");
         User user = userService.getLoggedInUser();
 
         String currentUserId = user.getUserId();
-        List<Post> posts = postService.getSortedHomePosts(currentUserId, sortBy);
+        List<Post> posts = postService.getAllSortedPosts(currentUserId, "");
         if (posts == null) {
             String errorMessage = "Something went wrong.\n" + error;
             mv.addObject("errorMessage", errorMessage);
@@ -58,13 +57,6 @@ public class SortedPostsController {
         } else {
             mv.addObject("posts", posts);
         }
-
-        // Pass data for maintaining sortBy selection
-        mv.addObject("currentSortBy", sortBy);
-        mv.addObject("isNewest", "newest".equals(sortBy));
-        mv.addObject("isOldest", "oldest".equals(sortBy));
-        mv.addObject("isLikes", "likes".equals(sortBy));
-        mv.addObject("isComments", "comments".equals(sortBy));
 
         return mv;
     }
