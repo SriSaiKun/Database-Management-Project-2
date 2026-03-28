@@ -603,7 +603,7 @@ public class PostService {
         return posts;
     }
 
-        public List<Post> getAllSortedPosts(String userId, String sortBy) {
+        public List<Post> getAllSortedPosts(String userId, String sortBy, String include) {
         List<Post> posts = new ArrayList<>();
 
         String orderByClause;
@@ -628,12 +628,40 @@ public class PostService {
             }
         }
 
+        String includeClause = "";
+        if (include == null) {
+            includeClause = "";
+        } else {
+            System.out.println(include);
+            switch (include.toLowerCase()) {
+                case "all":
+                    includeClause = "";
+                    break;
+                case "bookmarked":
+                    System.out.println("bookmarked");
+                    includeClause = "AND (p.postId IN (SELECT b.postId FROM bookmark b WHERE b.postId = p.postId AND b.userId = " + userId + ")) ";
+                    break;
+                case "liked":
+                    System.out.println("liked");
+                    includeClause = "AND (p.postId IN (SELECT h.postId FROM heart h WHERE h.postId = p.postId AND h.userId = " + userId + ")) ";
+                    break;
+                case "likedandbookmarked":
+                    includeClause = "AND (p.postId IN (SELECT b.postId FROM bookmark b WHERE b.postId = p.postId AND b.userId = " + userId + ")) "
+                    + "AND (p.postId IN (SELECT h.postId FROM heart h WHERE h.postId = p.postId AND h.userId = " + userId + ")) ";
+                    break;
+                default:
+                    includeClause = ""; // Default to newest
+            }
+        }
+
         final String sql
                 = "SELECT p.postId postId, p.userId userId, p.content content, DATE_FORMAT(p.postDate, '%b %d, %Y, %I:%i %p') AS postDate, "
                 + "u.firstName firstName, u.lastName lastName "
                 + "FROM post p, user u "
                 + "WHERE p.userId = u.userId "
+                + includeClause
                 + "ORDER BY " + orderByClause;
+            System.out.println(sql);
 
         try (Connection conn = dataSource.getConnection(); PreparedStatement pstmt = conn.prepareStatement(sql)) {
 

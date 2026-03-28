@@ -41,6 +41,7 @@ public class AllPostsController {
      */
     @GetMapping
     public ModelAndView webpage(@RequestParam(name = "sortBy", required = false) String sortBy,
+            @RequestParam(name = "include", required = false) String include,
             @RequestParam(name = "error", required = false) String error) {
 
         // See notes on ModelAndView in BookmarksController.java.
@@ -48,7 +49,7 @@ public class AllPostsController {
         User user = userService.getLoggedInUser();
 
         String currentUserId = user.getUserId();
-        List<Post> posts = postService.getAllSortedPosts(currentUserId, sortBy);
+        List<Post> posts = postService.getAllSortedPosts(currentUserId, sortBy, include);
         if (posts == null) {
             String errorMessage = "Something went wrong.\n" + error;
             mv.addObject("errorMessage", errorMessage);
@@ -66,6 +67,12 @@ public class AllPostsController {
         mv.addObject("isLikes", "likes".equals(sortBy));
         mv.addObject("isComments", "comments".equals(sortBy));
 
+        // Pass data for maintaining include selection
+        mv.addObject("currentInclude", include);
+        mv.addObject("isAll", "all".equals(include));
+        mv.addObject("isBookmarked", "bookmarked".equals(include));
+        mv.addObject("isLiked", "liked".equals(include));
+        mv.addObject("isLnB", "likedAndBookmarked".equals(include));
         return mv;
     }
 

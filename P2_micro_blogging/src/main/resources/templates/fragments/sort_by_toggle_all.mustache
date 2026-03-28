@@ -5,11 +5,19 @@ This is a project developed by Dr. Menik to give the students an opportunity to 
 -->
 
 <form action="/allPosts" method="get" class="title-bar content-center">
-    <select onchange="this.form.submit()" name="sortBy" class="short-input">
-        <option value="" hidden>Sort All Posts </option>
+    <select name="sortBy" class="short-input">
+        <option value="" hidden>Sort By</option>
         <option value="newest" {{#isNewest}}selected{{/isNewest}}>Newest</option>
         <option value="oldest" {{#isOldest}}selected{{/isOldest}}>Oldest</option>
         <option value="likes" {{#isLikes}}selected{{/isLikes}}>Likes</option>
         <option value="comments" {{#isComments}}selected{{/isComments}}>Comments</option>
     </select>
+    <select name="include" class="short-input">
+        <option value="" hidden>Filter</option>
+        <option value="all" {{#isAll}}selected{{/isAll}}>All Posts</option>
+        <option value="bookmarked" {{#isBookmarked}}selected{{/isBookmarked}}>Bookmarked Posts</option>
+        <option value="liked" {{#isLiked}}selected{{/isLiked}}>Liked Posts</option>
+        <option value="likedAndBookmarked" {{#isLnB}}selected{{/isLnB}}>Liked and Bookmarked Posts</option>
+    </select>
+    <button type="submit" class="action-button">Sort</button>
 </form>
