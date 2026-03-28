@@ -5,14 +5,11 @@
  */
 package uga.menik.csx370.controllers;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
@@ -39,7 +36,7 @@ public class SortedPostsController {
     }
 
     /**
-     * This function handles the /sortedposts URL. 
+     * This function handles the /sortedposts URL.
      *
      */
     @GetMapping
@@ -47,11 +44,11 @@ public class SortedPostsController {
             @RequestParam(name = "error", required = false) String error) {
 
         // See notes on ModelAndView in BookmarksController.java.
-        ModelAndView mv = new ModelAndView("posts_page");
+        ModelAndView mv = new ModelAndView("home_page");
         User user = userService.getLoggedInUser();
 
         String currentUserId = user.getUserId();
-        List<Post> posts = postService.getSortedPosts(currentUserId, sortBy);
+        List<Post> posts = postService.getSortedHomePosts(currentUserId, sortBy);
         if (posts == null) {
             String errorMessage = "Something went wrong.\n" + error;
             mv.addObject("errorMessage", errorMessage);
@@ -61,14 +58,15 @@ public class SortedPostsController {
         } else {
             mv.addObject("posts", posts);
         }
-        
+
         // Pass data for maintaining sortBy selection
         mv.addObject("currentSortBy", sortBy);
         mv.addObject("isNewest", "newest".equals(sortBy));
         mv.addObject("isOldest", "oldest".equals(sortBy));
         mv.addObject("isLikes", "likes".equals(sortBy));
         mv.addObject("isComments", "comments".equals(sortBy));
-            
+
         return mv;
     }
+
 }
