@@ -5,14 +5,11 @@
  */
 package uga.menik.csx370.controllers;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
@@ -26,32 +23,33 @@ import uga.menik.csx370.services.UserService;
  * Handles /post URL and its sub urls.
  */
 @Controller
-@RequestMapping("/sortedposts")
-public class SortedPostsController {
+@RequestMapping("/allPosts")
+public class AllPostsController {
 
     private final PostService postService;
     private final UserService userService;
 
     @Autowired
-    public SortedPostsController(PostService postService, UserService userService) {
+    public AllPostsController(PostService postService, UserService userService) {
         this.postService = postService;
         this.userService = userService;
     }
 
     /**
-     * This function handles the /sortedposts URL. 
+     * This function handles the /allPosts URL.
      *
      */
     @GetMapping
-    public ModelAndView webpage(@RequestParam(name = "sortBy", required = true) String sortBy,
+    public ModelAndView webpage(@RequestParam(name = "sortBy", required = false) String sortBy,
+            @RequestParam(name = "include", required = false) String include,
             @RequestParam(name = "error", required = false) String error) {
 
         // See notes on ModelAndView in BookmarksController.java.
-        ModelAndView mv = new ModelAndView("posts_page");
+        ModelAndView mv = new ModelAndView("all_posts");
         User user = userService.getLoggedInUser();
 
         String currentUserId = user.getUserId();
-        List<Post> posts = postService.getSortedPosts(currentUserId, sortBy);
+        List<Post> posts = postService.getAllSortedPosts(currentUserId, sortBy, include);
         if (posts == null) {
             String errorMessage = "Something went wrong.\n" + error;
             mv.addObject("errorMessage", errorMessage);
@@ -61,14 +59,21 @@ public class SortedPostsController {
         } else {
             mv.addObject("posts", posts);
         }
-        
+
         // Pass data for maintaining sortBy selection
         mv.addObject("currentSortBy", sortBy);
         mv.addObject("isNewest", "newest".equals(sortBy));
         mv.addObject("isOldest", "oldest".equals(sortBy));
         mv.addObject("isLikes", "likes".equals(sortBy));
         mv.addObject("isComments", "comments".equals(sortBy));
-            
+
+        // Pass data for maintaining include selection
+        mv.addObject("currentInclude", include);
+        mv.addObject("isAll", "all".equals(include));
+        mv.addObject("isBookmarked", "bookmarked".equals(include));
+        mv.addObject("isLiked", "liked".equals(include));
+        mv.addObject("isLnB", "likedAndBookmarked".equals(include));
         return mv;
     }
+
 }

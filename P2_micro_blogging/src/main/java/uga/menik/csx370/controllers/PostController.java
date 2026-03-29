@@ -60,7 +60,7 @@ public class PostController {
 
         String currentUserId = user.getUserId();
         List<Comment> comments = postService.getComments(postId, currentUserId);
-        if (comments != null && !comments.isEmpty()) {
+        if (comments != null) {
             Post post = postService.getPost(postId, user.getUserId());
             if (post != null) {
                 String postContent = post.getContent();
@@ -75,14 +75,12 @@ public class PostController {
                         comments.size(), isHearted, isBookmarked, comments);
                 mv.addObject("posts", postWithComments);
             }
-        } else if (comments == null) {
+        } else  {
             // If an error occured, you can set the following property with the
             // error message to show the error message to the user.
             // An error message can be optionally specified with a url query parameter too.
             String errorMessage = error;
             mv.addObject("errorMessage", errorMessage);
-        } else {
-            mv.addObject("isNoContent", true);
         }
             
         return mv;

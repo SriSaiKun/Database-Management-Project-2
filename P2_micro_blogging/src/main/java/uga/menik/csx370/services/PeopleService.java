@@ -56,7 +56,7 @@ public class PeopleService {
         final String sqlIsFollowed = "SELECT True as followed " +
         "FROM follow " +
         "WHERE followerId = ? AND followeeId = ?";
-        final String sqlDate = "SELECT DATE_FORMAT(postDate, '%b %d, %Y %h:%i %p') as postDate from post WHERE userId = ? ORDER BY postDate DESC LIMIT 1;";
+        final String sqlDate = "SELECT DATE_FORMAT(postDate, '%b %d, %Y, %h:%i %p') as postDate from post WHERE userId = ? ORDER BY postDate DESC LIMIT 1;";
 
         List<FollowableUser> followableUsers = new ArrayList<>();
 
