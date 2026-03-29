@@ -31,9 +31,9 @@ public class ProfileService {
 
     // Selects all posts made by the specified user by joining the post and user tables on userId.
     // Retrieves the post details (postId, content, postDate) and the user details (userId, firstName, lastName).
-    // Filters results to only include posts by the specified user, ordered most recent first.
-    public List<Post> getPostsForUser(String userId) {
-        final String sql = "SELECT p.postId, p.content, DATE_FORMAT(p.postDate, '%b %d, %Y, %h:%i %p') as postDate," +
+    // Filters results to only include posts by the specified user, ordered most recent first.x
+    public List<Post> getPostsForUser(String userId, String loggedInUserId) {
+        final String sql = "SELECT p.postId, p.content, DATE_FORMAT(p.postDate, '%b %d, %Y %h:%i %p') as postDate," +
                            "u.userId, u.firstName, u.lastName " +
                            "FROM post p JOIN user u ON p.userId = u.userId " +
                            "WHERE p.userId = ? " +
@@ -62,8 +62,8 @@ public class ProfileService {
                     User user = new User(userId, firstName, lastName);
                     int heartsCount = PostService.getHeartsCount(postId, dataSource);
                     int commentCount = PostService.getCommentsCount(postId, dataSource);
-                    Boolean isHearted = PostService.isHearted(postId, userId, dataSource);
-                    Boolean isBookmarked = PostService.isBookmarked(postId, userId, dataSource);
+                    Boolean isHearted = PostService.isHearted(postId, loggedInUserId, dataSource);
+                    Boolean isBookmarked = PostService.isBookmarked(postId, loggedInUserId, dataSource);
                     posts.add(new Post(postId, content, postDate, user, heartsCount, commentCount, isHearted, isBookmarked));
                 }
             }

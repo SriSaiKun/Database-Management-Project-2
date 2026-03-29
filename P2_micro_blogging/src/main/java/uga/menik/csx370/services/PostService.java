@@ -323,7 +323,10 @@ public class PostService {
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    posts.add(buildPost(rs, isHearted(rs.getString("postId"), userId, dataSource), false));
+                     String postId = rs.getString("postId");
+    		     boolean isHearted = isHearted(postId, userId, dataSource);
+                     boolean isBookmarked = isBookmarked(postId, userId, dataSource);
+                     posts.add(buildPost(rs, isHearted, isBookmarked));
                 }
             }
         } catch (SQLException e) {
