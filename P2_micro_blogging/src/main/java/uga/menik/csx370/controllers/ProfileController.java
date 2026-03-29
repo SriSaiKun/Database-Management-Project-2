@@ -65,7 +65,8 @@ public class ProfileController {
 
         // Use ProfileService to get real posts for this user from the database.
         // Replaces the hardcoded Utility.createSamplePostsListWithoutComments() call.
-        List<Post> posts = profileService.getPostsForUser(userId);
+        String loggedInUserId = userService.getLoggedInUser().getUserId();
+	List<Post> posts = profileService.getPostsForUser(userId, loggedInUserId);
         mv.addObject("posts", posts);
 
         // Pass error message to template if one was provided in the URL.
