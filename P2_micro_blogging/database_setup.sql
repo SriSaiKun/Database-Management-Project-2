@@ -18,13 +18,14 @@ create table if not exists user (
     constraint lastName_min_length check (char_length(trim(lastName)) >= 2)
 );
 -- User Data Insertion:
+-- All unhashed passwords are "password"
 INSERT INTO user (userId, username, password, firstName, lastName) VALUES
-    (1, 'aam43129', '$2a$10$oFvwqabaoAzJLJbCPfLdy.x0mm44wIKxTh.p58QXSrWjUAsgdl/Wm', 'Aastha', 'Mishra'),
-    (2, 'jjd12312', '$2a$10$NtEJXLqrH4p/O5TuUGo6suJZE9HnMvjRdgrzGL6rSQdyLxpsCOMlO', 'Jane',   'Doe'),
-    (3, 'kdd90840', '$2a$10$tgm8Qm./smtNXZiuLW7jhOlTBh94HwSXOqkYcvjbO7MqTf9XYFD5i', 'Kara',   'Danvers'),
-    (4, 'oqq75934', '$2a$10$WrNzl99H8VKJi5GuJmfhh.c2axSK5OzfGE./3pku6.zR4j1jVgTzS', 'Oliver', 'Queen'),
-    (5, 'bww11223', '$2a$10$NtEJXLqrH4p/O5TuUGo6suJZE9HnMvjRdgrzGL6rSQdyLxpsCOMlO', 'Barry',  'West'),
-    (6, 'dpr44556', '$2a$10$NtEJXLqrH4p/O5TuUGo6suJZE9HnMvjRdgrzGL6rSQdyLxpsCOMlO', 'Diana',  'Prince');
+    (1, 'harry', '$2a$10$s.qhK5Z2dlwB5Jld8A9gUOB1vM9bSB9omkciYNG6QNf6cO8p9SgiW', 'Harry', 'Potter'),
+    (2, 'hermione', '$2a$10$..C/3XazrTSEXEQ8NqjQwu6FydJqXgAY6z13XzIG6f8mhLZG9OKTa', 'Hermione',   'Granger'),
+    (3, 'ron', '$2a$10$H55qwAz1TC9MJalyulJlk.lA1VQxAZ23uz5xwitfmZHlu73bXOc9q', 'Ron',   'Weasley'),
+    (4, 'draco', '$2a$10$GrHk9jA9fn//0rDL5skQZ.9YEf6wYDDOKobjWGYJXRz2LALabZnTK', 'Draco', 'Malfoy'),
+    (5, 'severus', '$2a$10$aufPUxfwRUlSMvfvKAcwZuXQUwjaP893Ln7ncIJIinMYr4.VLzRDa', 'Severus',  'Snape'),
+    (6, 'tom', '$2a$10$SFWQyyfGwPlrJ1HPC5KH4.xfxpZgS9giZ.dAEUc.Hm33/U.tAQD5O', 'Tom',  'Riddle');
 
 -- Create the post table.
 CREATE TABLE post (
