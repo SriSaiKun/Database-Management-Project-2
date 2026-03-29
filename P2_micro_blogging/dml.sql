@@ -139,3 +139,42 @@ WHERE h.tag IN (?)
 GROUP BY p.postId, p.userId, p.content, p.postDate
 HAVING COUNT(DISTINCT h.tag) = ?
 ORDER BY p.postDate DESC;
+
+--- Sort By and Filter Features
+
+-- Sort By for home page
+-- http://localhost:8081/sortedHomePosts?sortBy=...
+-- Sort posts that should appear in home page (ie: posts made by the user or made by someone the user follows) by the user selected criteria
+SELECT p.postId postId, p.userId userId, p.content content, DATE_FORMAT(p.postDate, '%b %d, %Y, %I:%i %p') AS postDate,
+    u.firstName firstName, u.lastName lastName 
+FROM post p, user u
+WHERE p.userId = u.userId
+AND (p.userId = ? OR p.userid IN (
+        SELECT followeeId FROM follow WHERE followerId = ?
+    )
+)
+ORDER BY p.postDate DESC; -- p.postDate DESC is the default if sortBy is not specified
+-- p.postDate DESC could also be:
+-- p.postDate DESC -- (newest)
+-- p.postDate ASC -- (oldest)
+-- (SELECT COUNT(*) FROM heart h where h.postId = p.postId) DESC -- (likes)
+-- (SELECT COUNT(*) FROM comment c where c.postId = p.postId) DESC -- (comments)
+
+-- Sort By and Filter for all posts page
+-- http://localhost:8081/allPosts?sortBy=...&include=...
+SELECT p.postId postId, p.userId userId, p.content content, DATE_FORMAT(p.postDate, '%b %d, %Y, %I:%i %p') AS postDate,
+    u.firstName firstName, u.lastName lastName 
+FROM post p, user u
+WHERE p.userId = u.userId
+-- "" is the default for the include option if include is not specified
+-- "" could also be :
+-- "" -- (all)
+-- AND (p.postId IN (SELECT b.postId FROM bookmark b WHERE b.postId = p.postId AND b.userId = ?)) -- (bookmarked)
+-- AND (p.postId IN (SELECT h.postId FROM heart h WHERE h.postId = p.postId AND h.userId = ?)) -- (liked)
+-- AND (p.postId IN (SELECT b.postId FROM bookmark b WHERE b.postId = p.postId AND b.userId = ?)) AND (p.postId IN (SELECT h.postId FROM heart h WHERE h.postId = p.postId AND h.userId = ?)) -- (likedAndBookmarked)
+ORDER BY p.postDate DESC; -- p.postDate DESC is the default for sortBy if sortBy is not specified
+-- p.postDate DESC could also be:
+-- p.postDate DESC -- (newest)
+-- p.postDate ASC -- (oldest)
+-- (SELECT COUNT(*) FROM heart h where h.postId = p.postId) DESC -- (likes)
+-- (SELECT COUNT(*) FROM comment c where c.postId = p.postId) DESC -- (comments)
